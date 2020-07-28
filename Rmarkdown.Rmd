@@ -1,0 +1,153 @@
+---
+title: "Regresión Lineal Simple"
+author: "Mary Jane Rivero"
+date: "16/7/2020"
+output:
+  word_document: default
+  html_document: default
+---
+## EJERCICIO
+En un estudio realizado en el rÍo Snake en Wyoming se desea analizar la relaciÓn entre el contenido de agua de la nieve que cae al primero de Abril, con la afluencia (en pulgadas) en la cuenca del río. Los datos recolectados se encuentran en el archivo SnakeRiver.csv
+
+Lectura de datos
+```{r read, include=TRUE}
+datos <- read.csv(file="SnakeRiver.csv")
+```
+Debido a que los datos se encuentran en una sola columna procedemos a utilizar la función sep para desagruparlos.
+```{r read2, include=TRUE}
+datos <- read.csv(file="SnakeRiver.csv",sep=";")
+attach(datos)
+```
+También podríamos utilizar la función read.csv2 para leer los datos y no sería necesario utilizar la función sep como argumento.
+```{r read3, include=TRUE}
+datos2 <- read.csv2(file="SnakeRiver.csv")
+```
+Para ver un resumen de los datos
+```{r summary, include=TRUE}
+summary(datos)
+```
+
+En primer lugar graficaremos los datos para ver el comportamiento de estos.
+
+## 1. Análisis gráfico de las variables.
+
+```{r plot}
+plot(datos)
+```
+
+Según el gráfico anterior podemos observar que existe existe relación directa entre las variables de nuestro conjunto de datos, ya que se ajustan a una línea recta.
+
+Realizaremos un modelo de regresión lineal para verificar si realmente la variable independiente (Nieve)explica las variaciones de la variable dependiente (NivelRio).
+
+## Creación del Modelo de regresión lineal
+Y= βo + β1 X1 + E
+
+Para llevar a cabo el modelo es importante verificar que sea escrito con la siguiente estructura: **Y~X** y se utilice la función lm (lineal model).
+```{r lm, echo=FALSE}
+fit <- lm(NivelRio~Nieve, data = datos)
+```
+## 2. Estimación de βo.
+
+## Prueba de hipótesis para el intercepto.
+Ho :βo = 0
+
+H1 :βo ≠ 0
+
+## Criterio de rechazo o no rechazo.
+P-Value > 0.05 No rechazo Ho.
+
+P-Value < 0.05 Se rechaza Ho.
+
+Los resultados de la regresión se visualizan con la función summary. Aquí obtendremos los coeficientes Beta y una prueba t-student que nos permitirá verificar si dichos coeficientes son significativos. 
+
+```{r summaryfit, echo=FALSE}
+summary(fit)
+```
+Con una confianza del 95% no se rechaza Ho por lo que podemos afirmar que el intercepto no es significativo por lo que lo eliminaremos del modelo.Creamos un nuevo objeto sin determiando valor.
+```{r fit1, echo=FALSE}
+fit1 <- lm(NivelRio~0+Nieve, data=datos)
+summary(fit1)
+```
+Creamos la tabla anova. Es importante mencionar que el objeto fit contiene información necesaria para el anova.
+
+```{r anova, echo=FALSE}
+anova(fit1)
+```
+## 3. Prueba de hipótesis para el ANOVA.
+Ho :β1 = 0
+
+H1 :β2 ≠ 0
+
+## Criterio de rechazo o no rechazo.
+P-Value > 0.05 No rechazo Ho.
+
+P-Value < 0.05 Se rechaza Ho.
+
+Con una confianza del 95%, p~valor < alfa por lo que se rechaza Ho, y se considera que el modelo es significativo, por lo tanto se puede decir que hasta el momento el modelo es válido. Es decir, las variaciones en el nivel de río se explican por la nieve. 
+
+## 4. Análisis de determinación.
+Aproximadamente el 98.98% de las variaciones en la resistencia del papel es explicada por el modelo, mientras que el 1.02% es explicado por las perturbaciones.
+
+## 5. Supuestos.
+
+```{r graficos, echo=FALSE}
+par(mfrow=c(2,2))
+plot(fit1)
+```
+## Normalidad
+Ho: Los residuos se ajustan a una distribución normal, con media u=0 y varianza estimada como 2.9
+
+H1: Los residuos no se ajustan a una distribución normal, con media u=0 y varianza estimada como 2.9
+
+```{r normalidad, echo=FALSE}
+library(car)
+shapiro.test(fit1$residuals)
+```
+Utilizando una prueba de Shapiro-Wilk, con una confianza del 95% y un p~valor = 0,3761, no se rechaza Ho, por lo que se puede decir que los residuos se distribuyen normalmente con media u=0. Por otro lado, el gráfico Normal Q-Q arrojado por R-Studio evidencia que los residuos se ajustan a una línea recta, lo cual apoya el supuesto de normalidad.
+
+## Independencia
+Ho: Los residuos son independientes.
+H1: Los residuos son dependientes.
+
+```{r independencia, echo=FALSE}
+library(car)
+durbinWatsonTest(fit)
+```
+Aplicando una prueba de DurbinWatson, con una confianza del 95% y un pvalor=0,098 mayor a alfa, no se rechaza Ho, por lo que se puede decir que los residuos son independientes, por otro lado el gráfico de Residuals Vs Fitted muestra aleatoriedad entre los puntos por lo que soporta que los residuos son independientes. 
+
+## Homocedasticidad
+Ho: La varianza de los residuos es constante.
+H1: La varianza de los residuos es no constante.
+```{r homocedasticidad, echo=FALSE}
+library(car)
+ncvTest(fit1)
+```
+Aplicando una prueba de ncvTest(fit), con una confianza del 95% y un p~valor= 0,32895 mayor al alfa, no se rechaza Ho, por lo tanto se puede decir que los residuos cuenta con varianza constante, al mismo tiempo el gráfico de scale-location evidencia que en algunos puntos la distancia se mantiene constante, sin embargo, el mejor criterio que podemos usar para afirmar la homocedasticidad es el del ncvTest.
+
+CONCLUSIÓN: El modelo cumple con todos los supuestos por lo que se puede decir que el modelo es válido, sin embargo el R^2 no es bueno, lo que ocasiona o lo que nos lleva a afirmar que la variable de la concentración de manera no es suficiente para predecir la resistencia del papel.
+
+## Intervalos
+```{r intervalos, echo=FALSE}
+newd<-data.frame(Nieve=c(24.65,23.73))
+predict(fit,newdata = newd)
+```
+
+Con una confianza del 95% y  una cantidad de nieve igual a 24.65 se espera que el nivel del río sea  6.029945 y una cantidad de nieve igual a 23.73 se espera que el nivel del río sea  6.069792
+
+## Intervalo de confianza 
+
+```{r intervalos confianza, echo=FALSE}
+predict(fit,newdata = newd, interval = "confidence") 
+```
+1. Con una confianza del 95%, el nivel del río promedio cuando X=24.65 está entre -1.0776254 y 5.018792
+2. Con una confianza del 95%, el nivel del río promedio cuando X=23.73 está entre -0.8979644 y 5.137980
+
+## Intervalo de predicción
+
+```{r intervalos confianza, echo=FALSE}
+predict(fit, newdata=newd, interval = "prediction")
+```
+1. Con una confianza del 95% para una observación futura con un valor de X=24.65 el valor esperado promedio estará entre el intervalo 1.691705 10.36818.
+Con una confianza del 95% para una observación futura con un valor de X= X=23.73 el valor esperado promedio  estará entre el intervalo 1.735539 10.40404.
+
+
